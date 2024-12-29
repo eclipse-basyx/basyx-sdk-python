@@ -811,15 +811,25 @@ class Referable(HasExtension, metaclass=abc.ABCMeta):
         :param update_source: Update the source attribute with the other's source attribute. This is not propagated
                               recursively
         """
-        for name, var in vars(other).items():
-            # do not update the parent, namespace_element_sets or source (depending on update_source parameter)
-            if name in ("parent", "namespace_element_sets") or name == "source" and not update_source:
+        for name in dir(other):
+            # Skip private and protected attributes
+            if name.startswith('_'):
                 continue
-            if isinstance(var, NamespaceSet):
+
+            # Do not update 'parent', 'namespace_element_sets', or 'source' (depending on update_source parameter)
+            if name in ("parent", "namespace_element_sets") or (name == "source" and not update_source):
+                continue
+
+            # Skip methods
+            attr = getattr(other, name)
+            if callable(attr):
+                continue
+
+            if isinstance(attr, NamespaceSet):
                 # update the elements of the NameSpaceSet
-                vars(self)[name].update_nss_from(var)
+                getattr(self, name).update_nss_from(attr)
             else:
-                vars(self)[name] = var  # that variable is not a NameSpaceSet, so it isn't Referable
+                setattr(self, name, attr)  # that variable is not a NameSpaceSet, so it isn't Referable
 
     def commit(self) -> None:
         """
