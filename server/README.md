@@ -15,7 +15,7 @@ See [below](#options) on how to configure this.
 ## Building
 The container image can be built via:
 ```
-$ docker buildx build -t basyx-python-sdk-http-server .
+$ docker build -t basyx-python-server .
 ```
 
 ## Running
@@ -46,17 +46,17 @@ The container can be configured via environment variables:
 
 Putting it all together, the container can be started via the following command:
 ```
-$ docker run -p 8080:80 -v ./storage:/storage basyx-python-sdk-http-server
+$ docker run -p 8080:80 -v ./storage:/storage basyx-python-server
 ```
 
 Since Windows uses backslashes instead of forward slashes in paths, you'll have to adjust the path to the storage directory there:
 ```
-> docker run -p 8080:80 -v .\storage:/storage basyx-python-sdk-http-server
+> docker run -p 8080:80 -v .\storage:/storage basyx-python-server
 ```
 
 Per default, the server will use the `LOCAL_FILE_READ_ONLY` storage type and serve the API under `/api/v3.0` and read files from `/storage`. If you want to change this, you can do so like this:
 ```
-$ docker run -p 8080:80 -v ./storage2:/storage2 -e API_BASE_PATH=/api/v3.1 -e STORAGE_TYPE=LOCAL_FILE_BACKEND -e STORAGE_PATH=/storage2 basyx-python-sdk-http-server
+$ docker run -p 8080:80 -v ./storage2:/storage2 -e API_BASE_PATH=/api/v3.1 -e STORAGE_TYPE=LOCAL_FILE_BACKEND -e STORAGE_PATH=/storage2 basyx-python-server
 ```
 
 ## Building and running the image with docker-compose
