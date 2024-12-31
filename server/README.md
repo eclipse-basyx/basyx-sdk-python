@@ -15,7 +15,7 @@ See [below](#options) on how to configure this.
 ## Building
 The container image can be built via:
 ```
-$ docker build -t basyx-python-server .
+$ docker build -t basyx-python-server -f Dockerfile ..
 ```
 
 ## Running
@@ -70,7 +70,9 @@ This is the exemplary `docker-compose` file for the server:
 ````yaml
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
     ports:
     - "8080:80"
     volumes:
