@@ -852,7 +852,7 @@ class WSGIApp:
             "submodel_id": url_args["submodel_id"]
         }, force_external=True)
         if "path" in url_args:
-            redirect_url += url_args["path"] + "/"
+            redirect_url += "/" + url_args["path"]
         if request.query_string:
             redirect_url += "?" + request.query_string.decode("ascii")
         return werkzeug.utils.redirect(redirect_url, 307)
