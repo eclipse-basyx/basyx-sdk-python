@@ -252,7 +252,10 @@ def http_exception_to_response(exception: werkzeug.exceptions.HTTPException, res
 
 
 def is_stripped_request(request: Request) -> bool:
-    return request.args.get("level") == "core"
+    level = request.args.get("level")
+    if level not in {"deep", "core", None}:
+        raise BadRequest(f"Level {level} is not a valid level!")
+    return level == "core"
 
 
 T = TypeVar("T")
