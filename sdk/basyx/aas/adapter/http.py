@@ -255,6 +255,9 @@ def is_stripped_request(request: Request) -> bool:
     level = request.args.get("level")
     if level not in {"deep", "core", None}:
         raise BadRequest(f"Level {level} is not a valid level!")
+    extent = request.args.get("extent")
+    if extent is not None:
+        raise werkzeug.exceptions.NotImplemented(f"The parameter extent is not yet implemented for this server!")
     return level == "core"
 
 
@@ -943,6 +946,8 @@ class WSGIApp:
     def get_submodel_submodel_elements_id_short_path_metadata(self, request: Request, url_args: Dict,
                                                               response_t: Type[APIResponse], **_kwargs) -> Response:
         submodel_element = self._get_submodel_submodel_elements_id_short_path(url_args)
+        if isinstance(submodel_element, model.Capability) or isinstance(submodel_element, model.Operation):
+            raise BadRequest(f"{submodel_element.id_short} does not allow the content modifier metadata!")
         return response_t(submodel_element, stripped=True)
 
     def get_submodel_submodel_elements_id_short_path_reference(self, request: Request, url_args: Dict,
