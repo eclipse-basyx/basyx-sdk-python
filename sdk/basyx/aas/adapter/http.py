@@ -48,7 +48,7 @@ import werkzeug.exceptions
 import werkzeug.routing
 import werkzeug.urls
 import werkzeug.utils
-from werkzeug.exceptions import BadRequest, Conflict, NotFound, UnprocessableEntity
+from werkzeug.exceptions import BadRequest, Conflict, NotFound
 from werkzeug.routing import MapAdapter, Rule, Submount
 from werkzeug.wrappers import Request, Response
 from werkzeug.datastructures import FileStorage
@@ -306,7 +306,7 @@ class HTTPApiDecoder:
     @classmethod
     def assert_type(cls, obj: object, type_: Type[T]) -> T:
         if not isinstance(obj, type_):
-            raise UnprocessableEntity(f"Object {obj!r} is not of type {type_.__name__}!")
+            raise BadRequest(f"Object {obj!r} is not of type {type_.__name__}!")
         return obj
 
     @classmethod
@@ -318,10 +318,10 @@ class HTTPApiDecoder:
             parsed = json.loads(data, cls=decoder)
             if not isinstance(parsed, list):
                 if not expect_single:
-                    raise UnprocessableEntity(f"Expected List[{expect_type.__name__}], got {parsed!r}!")
+                    raise BadRequest(f"Expected List[{expect_type.__name__}], got {parsed!r}!")
                 parsed = [parsed]
             elif expect_single:
-                raise UnprocessableEntity(f"Expected a single object of type {expect_type.__name__}, got {parsed!r}!")
+                raise BadRequest(f"Expected a single object of type {expect_type.__name__}, got {parsed!r}!")
             # TODO: the following is ugly, but necessary because references aren't self-identified objects
             #  in the json schema
             # TODO: json deserialization will always create an ModelReference[Submodel], xml deserialization determines
@@ -345,7 +345,7 @@ class HTTPApiDecoder:
                 return [constructor(obj, *args) for obj in parsed]
 
         except (KeyError, ValueError, TypeError, json.JSONDecodeError, model.AASConstraintViolation) as e:
-            raise UnprocessableEntity(str(e)) from e
+            raise BadRequest(str(e)) from e
 
         return [cls.assert_type(obj, expect_type) for obj in parsed]
 
@@ -375,9 +375,9 @@ class HTTPApiDecoder:
             f: BaseException = e
             while f.__cause__ is not None:
                 f = f.__cause__
-            raise UnprocessableEntity(str(f)) from e
+            raise BadRequest(str(f)) from e
         except (etree.XMLSyntaxError, model.AASConstraintViolation) as e:
-            raise UnprocessableEntity(str(e)) from e
+            raise BadRequest(str(e)) from e
         return cls.assert_type(rv, expect_type)
 
     @classmethod
