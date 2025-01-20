@@ -7,6 +7,5 @@ basyx.aas.backend - Storing and Retrieving of AAS-objects in Backends
    :maxdepth: 2
    :caption: Contents:
 
-   backends
    couchdb
    local_file

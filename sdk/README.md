@@ -128,7 +128,7 @@ For further examples and tutorials, check out the `basyx.aas.examples`-package. 
 * [`tutorial_storage`](./basyx/aas/examples/tutorial_storage.py): Manage a larger number of Asset Administration Shells in an ObjectStore and resolve references
 * [`tutorial_serialization_deserialization`](./basyx/aas/examples/tutorial_serialization_deserialization.py): Use the JSON and XML serialization/deserialization for single objects or full standard-compliant files
 * [`tutorial_aasx`](./basyx/aas/examples/tutorial_aasx.py): Export Asset Administration Shells with related objects and auxiliary files to AASX package files
-* [`tutorial_backend_couchdb`](./basyx/aas/examples/tutorial_backend_couchdb.py): Use the *Backends* interface (`update()/commit()` methods) to manage and retrieve AAS objects in a CouchDB document database
+* [`tutorial_backend_couchdb`](./basyx/aas/examples/tutorial_backend_couchdb.py): Use the *CouchDBObjectStore* to manage and retrieve AAS objects in a CouchDB document database
 
 
 ### Documentation

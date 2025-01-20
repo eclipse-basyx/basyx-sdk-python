@@ -4,9 +4,6 @@
 """
 Tutorial for storing Asset Administration Shells, Submodels and Assets in a CouchDB database server, using the
 CouchDBObjectStore and CouchDB Backend.
-
-This tutorial also shows the usage of the commit()/update() mechanism for synchronizing objects with an external data
-source.
 """
 
 from configparser import ConfigParser
@@ -33,7 +30,6 @@ import basyx.aas.backend.couchdb
 # Step-by-Step Guide:
 # step 1: connecting to a CouchDB server
 # step 2: storing objects in CouchDBObjectStore
-# step 3: updating objects from the CouchDB and committing changes
 
 
 ##########################################
@@ -58,8 +54,7 @@ couchdb_password = config['couchdb']['password']
 
 
 # Provide the login credentials to the CouchDB backend.
-# These credentials are used whenever communication with this CouchDB server is required either via the
-# CouchDBObjectStore or via the update()/commit() backend.
+# These credentials are used whenever communication with this CouchDB server is required via the CouchDBObjectStore.
 basyx.aas.backend.couchdb.register_credentials(couchdb_url, couchdb_user, couchdb_password)
 
 # Now, we create a CouchDBObjectStore as an interface for managing the objects in the CouchDB server.
@@ -75,37 +70,11 @@ example_submodel1 = basyx.aas.examples.data.example_aas.create_example_asset_ide
 example_submodel2 = basyx.aas.examples.data.example_aas.create_example_bill_of_material_submodel()
 
 # The CouchDBObjectStore behaves just like other ObjectStore implementations (see `tutorial_storage.py`). The objects
-# are transferred to the CouchDB immediately. Additionally, the `source` attribute is set automatically, so update() and
-# commit() will work automatically (see below).
+# are transferred to the CouchDB immediately.
 object_store.add(example_submodel1)
 object_store.add(example_submodel2)
 
-
-####################################################################
-# Step 3: Updating Objects from the CouchDB and Committing Changes #
-####################################################################
-
-# Since the CouchDBObjectStore has set the `source` attribute of our Submodel objects, we can now use update() and
-# commit() to synchronize changes to these objects with the database. The `source` indicates (via its URI scheme) that
-# the CouchDB backend is used for the synchronization and references the correct CouchDB server url and database. For
-# this to work, we must make sure to `import aas.backend.couchdb` at least once in this Python application, so the
-# CouchDB backend is loaded.
-
-# Fetch recent updates from the server
-example_submodel1.update()
-
-# Make some changes to a Property within the submodel
-prop = example_submodel1.get_referable('ManufacturerName')
-assert isinstance(prop, basyx.aas.model.Property)
-
-prop.value = "RWTH Aachen"
-
-# Commit (upload) these changes to the CouchDB server
-# We can simply call commit() on the Property object. It will check the `source` attribute of the object itself as well
-# as the source attribute of all ancestors in the object hierarchy (including the Submodel) and commit the changes to
-# all of these external data sources.
-prop.commit()
-
+# For more information on how to use `ObjectStore`s in general, please refer to `tutorial_storage.py`.
 
 ############
 # Clean up #

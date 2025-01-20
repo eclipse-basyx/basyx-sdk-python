@@ -68,8 +68,7 @@ aas = AssetAdministrationShell(
 # persistent memory (i.e. on hard disk). In this case, you may choose the `CouchDBObjectStore` from
 # `aas.backends.couchdb` to use a CouchDB database server as persistent storage. Both ObjectStore implementations
 # provide the same interface. In addition, the CouchDBObjectStores allows synchronizing the local object with the
-# database via a Backend and the update()/commit() mechanism. See the `tutorial_backend_couchdb.py` for more
-# information.
+# database via a Backend. See the `tutorial_backend_couchdb.py` for more information.
 obj_store: model.DictObjectStore[model.Identifiable] = model.DictObjectStore()
 
 # step 2.2: add submodel and asset administration shell to store

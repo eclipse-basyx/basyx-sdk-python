@@ -8,8 +8,8 @@
 This module adds the functionality of storing and retrieving :class:`~basyx.aas.model.base.Identifiable` objects
 in local files.
 
-The :class:`~.LocalFileBackend` takes care of updating and committing objects from and to the files, while the
-:class:`~LocalFileObjectStore` handles adding, deleting and otherwise managing the AAS objects in a specific Directory.
+The :class:`~LocalFileObjectStore` handles adding, deleting and otherwise managing
+the AAS objects in a specific Directory.
 """
 from typing import List, Iterator, Iterable, Union
 import logging
@@ -19,51 +19,11 @@ import hashlib
 import threading
 import weakref
 
-from . import backends
 from ..adapter.json import json_serialization, json_deserialization
 from basyx.aas import model
 
 
 logger = logging.getLogger(__name__)
-
-
-class LocalFileBackend(backends.Backend):
-    """
-    This Backend stores each Identifiable object as a single JSON document as a local file in a directory.
-    Each document's id is build from the object's identifier using a SHA256 sum of its identifiable; the document's
-    contents comprise a single property ``data``, containing the JSON serialization of the BaSyx Python SDK object. The
-    :ref:`adapter.json <adapter.json.__init__>` package is used for serialization and deserialization of objects.
-    """
-
-    @classmethod
-    def update_object(cls,
-                      updated_object: model.Referable,
-                      store_object: model.Referable,
-                      relative_path: List[str]) -> None:
-
-        if not isinstance(store_object, model.Identifiable):
-            raise FileBackendSourceError("The given store_object is not Identifiable, therefore cannot be found "
-                                         "in the FileBackend")
-        file_name: str = store_object.source.replace("file://localhost/", "")
-        with open(file_name, "r") as file:
-            data = json.load(file, cls=json_deserialization.AASFromJsonDecoder)
-            updated_store_object = data["data"]
-            store_object.update_from(updated_store_object)
-
-    @classmethod
-    def commit_object(cls,
-                      committed_object: model.Referable,
-                      store_object: model.Referable,
-                      relative_path: List[str]) -> None:
-        if not isinstance(store_object, model.Identifiable):
-            raise FileBackendSourceError("The given store_object is not Identifiable, therefore cannot be found "
-                                         "in the FileBackend")
-        file_name: str = store_object.source.replace("file://localhost/", "")
-        with open(file_name, "w") as file:
-            json.dump({'data': store_object}, file, cls=json_serialization.AASToJsonEncoder, indent=4)
-
-
-backends.register_backend("file", LocalFileBackend)
 
 
 class LocalFileObjectStore(model.AbstractObjectStore):
@@ -112,7 +72,6 @@ class LocalFileObjectStore(model.AbstractObjectStore):
             with open("{}/{}.json".format(self.directory_path, hash_), "r") as file:
                 data = json.load(file, cls=json_deserialization.AASFromJsonDecoder)
                 obj = data["data"]
-                self.generate_source(obj)
         except FileNotFoundError as e:
             raise KeyError("No Identifiable with hash {} found in local file database".format(hash_)) from e
         # If we still have a local replication of that object (since it is referenced from anywhere else), update that
@@ -120,11 +79,8 @@ class LocalFileObjectStore(model.AbstractObjectStore):
         with self._object_cache_lock:
             if obj.id in self._object_cache:
                 old_obj = self._object_cache[obj.id]
-                # If the source does not match the correct source for this CouchDB backend, the object seems to belong
-                # to another backend now, so we return a fresh copy
-                if old_obj.source == obj.source:
-                    old_obj.update_from(obj)
-                    return old_obj
+                old_obj.update_from(obj)
+                return old_obj
         self._object_cache[obj.id] = obj
         return obj
 
@@ -152,7 +108,6 @@ class LocalFileObjectStore(model.AbstractObjectStore):
             json.dump({"data": x}, file, cls=json_serialization.AASToJsonEncoder, indent=4)
             with self._object_cache_lock:
                 self._object_cache[x.id] = x
-            self.generate_source(x)  # Set the source of the object
 
     def discard(self, x: model.Identifiable) -> None:
         """
@@ -168,7 +123,6 @@ class LocalFileObjectStore(model.AbstractObjectStore):
             raise KeyError("No AAS object with id {} exists in local file database".format(x.id)) from e
         with self._object_cache_lock:
             del self._object_cache[x.id]
-        x.source = ""
 
     def __contains__(self, x: object) -> bool:
         """
@@ -214,23 +168,3 @@ class LocalFileObjectStore(model.AbstractObjectStore):
         Helper method to represent an ASS Identifier as a string to be used as Local file document id
         """
         return hashlib.sha256(identifier.encode("utf-8")).hexdigest()
-
-    def generate_source(self, identifiable: model.Identifiable) -> str:
-        """
-        Generates the source string for an :class:`~basyx.aas.model.base.Identifiable` object that is backed by the File
-
-        :param identifiable: Identifiable object
-        """
-        source: str = "file://localhost/{}/{}.json".format(
-            self.directory_path,
-            self._transform_id(identifiable.id)
-        )
-        identifiable.source = source
-        return source
-
-
-class FileBackendSourceError(Exception):
-    """
-    Raised, if the given object's source is not resolvable as a local file
-    """
-    pass

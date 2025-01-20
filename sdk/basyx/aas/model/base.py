@@ -18,7 +18,6 @@ from typing import List, Optional, Set, TypeVar, MutableSet, Generic, Iterable, 
 import re
 
 from . import datatypes, _string_constraints
-from ..backend import backends
 
 if TYPE_CHECKING:
     from . import provider
@@ -602,10 +601,6 @@ class Referable(HasExtension, metaclass=abc.ABCMeta):
     :ivar description: Description or comments on the element.
     :ivar parent: Reference (in form of a :class:`~.UniqueIdShortNamespace`) to the next referable parent element
         of the element.
-
-    :ivar source: Source of the object, a URI, that defines where this object's data originates from.
-                  This is used to specify where the Referable should be updated from and committed to.
-                  Default is an empty string, making it use the source of its ancestor, if possible.
     """
     @abc.abstractmethod
     def __init__(self):
@@ -617,7 +612,6 @@ class Referable(HasExtension, metaclass=abc.ABCMeta):
         # We use a Python reference to the parent Namespace instead of a Reference Object, as specified. This allows
         # simpler and faster navigation/checks and it has no effect in the serialized data formats anyway.
         self.parent: Optional[UniqueIdShortNamespace] = None
-        self.source: str = ""
 
     def __repr__(self) -> str:
         reversed_path = []
@@ -733,74 +727,7 @@ class Referable(HasExtension, metaclass=abc.ABCMeta):
         # Redundant to the line above. However, this way, we make sure that we really update the _id_short
         self._id_short = id_short
 
-    def update(self,
-               max_age: float = 0,
-               recursive: bool = True,
-               _indirect_source: bool = True) -> None:
-        """
-        Update the local Referable object from any underlying external data source, using an appropriate backend
-
-        If there is no source given, it will find its next ancestor with a source and update from this source.
-        If there is no source in any ancestor, this function will do nothing
-
-        :param max_age: Maximum age of the local data in seconds. This method may return early, if the previous update
-                        of the object has been performed less than ``max_age`` seconds ago.
-        :param recursive: Also call update on all children of this object. Default is True
-        :param _indirect_source: Internal parameter to avoid duplicate updating.
-        :raises backends.BackendError: If no appropriate backend or the data source is not available
-        """
-        # TODO consider max_age
-        if not _indirect_source:
-            # Update was already called on an ancestor of this Referable. Only update it, if it has its own source
-            if self.source != "":
-                backends.get_backend(self.source).update_object(updated_object=self,
-                                                                store_object=self,
-                                                                relative_path=[])
-
-        else:
-            # Try to find a valid source for this Referable
-            if self.source != "":
-                backends.get_backend(self.source).update_object(updated_object=self,
-                                                                store_object=self,
-                                                                relative_path=[])
-            else:
-                store_object, relative_path = self.find_source()
-                if store_object and relative_path is not None:
-                    backends.get_backend(store_object.source).update_object(updated_object=self,
-                                                                            store_object=store_object,
-                                                                            relative_path=list(relative_path))
-
-        if recursive:
-            # update all the children who have their own source
-            if isinstance(self, UniqueIdShortNamespace):
-                for namespace_set in self.namespace_element_sets:
-                    if "id_short" not in namespace_set.get_attribute_name_list():
-                        continue
-                    for referable in namespace_set:
-                        referable.update(max_age, recursive=True, _indirect_source=False)
-
-    def find_source(self) -> Tuple[Optional["Referable"], Optional[List[str]]]:  # type: ignore
-        """
-        Finds the closest source in these objects ancestors. If there is no source, returns None
-
-        :return: Tuple with the closest ancestor with a defined source and the relative path of id_shorts to that
-                 ancestor
-        """
-        referable: Referable = self
-        relative_path: List[NameType] = [self.id_short]
-        while referable is not None:
-            if referable.source != "":
-                relative_path.reverse()
-                return referable, relative_path
-            if referable.parent:
-                assert isinstance(referable.parent, Referable)
-                referable = referable.parent
-                relative_path.append(referable.id_short)
-                continue
-            break
-        return None, None
-
-    def update_from(self, other: "Referable", update_source: bool = False):
+    def update_from(self, other: "Referable"):
         """
         Internal function to updates the object's attributes from another object of a similar type.
 
@@ -808,55 +735,16 @@ class Referable(HasExtension, metaclass=abc.ABCMeta):
         protocol clients, etc.) to update the object's data, after ``update()`` has been called.
 
         :param other: The object to update from
-        :param update_source: Update the source attribute with the other's source attribute. This is not propagated
-                              recursively
         """
         for name, var in vars(other).items():
-            # do not update the parent, namespace_element_sets or source (depending on update_source parameter)
-            if name in ("parent", "namespace_element_sets") or name == "source" and not update_source:
+            # do not update the parent or namespace_element_sets
+            if name in ("parent", "namespace_element_sets"):
                 continue
             if isinstance(var, NamespaceSet):
                 # update the elements of the NameSpaceSet
                 vars(self)[name].update_nss_from(var)
             else:
                 vars(self)[name] = var  # that variable is not a NameSpaceSet, so it isn't Referable
-
-    def commit(self) -> None:
-        """
-        Transfer local changes on this object to all underlying external data sources.
-
-        This function commits the current state of this object to its own and each external data source of its
-        ancestors. If there is no source, this function will do nothing.
-        """
-        current_ancestor = self.parent
-        relative_path: List[NameType] = [self.id_short]
-        # Commit to all ancestors with sources
-        while current_ancestor:
-            assert isinstance(current_ancestor, Referable)
-            if current_ancestor.source != "":
-                backends.get_backend(current_ancestor.source).commit_object(committed_object=self,
-                                                                            store_object=current_ancestor,
-                                                                            relative_path=list(relative_path))
-            relative_path.insert(0, current_ancestor.id_short)
-            current_ancestor = current_ancestor.parent
-        # Commit to own source and check if there are children with sources to commit to
-        self._direct_source_commit()
-
-    def _direct_source_commit(self):
-        """
-        Commits children of an ancestor recursively, if they have a specific source given
-        """
-        if self.source != "":
-            backends.get_backend(self.source).commit_object(committed_object=self,
-                                                            store_object=self,
-                                                            relative_path=[])
-
-        if isinstance(self, UniqueIdShortNamespace):
-            for namespace_set in self.namespace_element_sets:
-                if "id_short" not in namespace_set.get_attribute_name_list():
-                    continue
-                for referable in namespace_set:
-                    referable._direct_source_commit()
 
     id_short = property(_get_id_short, _set_id_short)
 
@@ -2064,15 +1952,15 @@ class NamespaceSet(MutableSet[_NSO], Generic[_NSO]):
                 if isinstance(other_object, Referable):
                     backend, case_sensitive = self._backend["id_short"]
                     referable = backend[other_object.id_short if case_sensitive else other_object.id_short.upper()]
-                    referable.update_from(other_object, update_source=True)  # type: ignore
+                    referable.update_from(other_object)  # type: ignore
                 elif isinstance(other_object, Qualifier):
                     backend, case_sensitive = self._backend["type"]
                     qualifier = backend[other_object.type if case_sensitive else other_object.type.upper()]
-                    # qualifier.update_from(other_object, update_source=True) # TODO: What should happen here?
+                    # qualifier.update_from(other_object) # TODO: What should happend here?
                 elif isinstance(other_object, Extension):
                     backend, case_sensitive = self._backend["name"]
                     extension = backend[other_object.name if case_sensitive else other_object.name.upper()]
-                    # extension.update_from(other_object, update_source=True) # TODO: What should happen here?
+                    # extension.update_from(other_object) # TODO: What should happend here?
                 else:
                     raise TypeError("Type not implemented")
             except KeyError:

@@ -55,11 +55,6 @@ aashell = model.AssetAdministrationShell(
 ##############################################
 # Step 2: Serializing Single Objects to JSON #
 ##############################################
-
-# Before serializing the data, we should make sure, it's up-to-date. This is irrelevant for the static AAS objects in
-# this tutorial, but may be important when dealing with dynamic data.
-aashell.update()
-
 # `AASToJsonEncoder` from the `aas.adapter.json` module is a custom JSONEncoder class for serializing
 # Asset Administration Shell data into the official JSON format according to
 # 'Details of the Asset Administration Shell', chapter 5.5, using Python's built-in JSON library. When provided to the
@@ -102,17 +97,13 @@ obj_store: model.DictObjectStore[model.Identifiable] = model.DictObjectStore()
 obj_store.add(submodel)
 obj_store.add(aashell)
 
-# step 4.2: Again, make sure that the data is up-to-date
-submodel.update()
-aashell.update()
-
-# step 4.3: writing the contents of the ObjectStore to a JSON file
+# step 4.2: writing the contents of the ObjectStore to a JSON file
 basyx.aas.adapter.json.write_aas_json_file('data.json', obj_store)
 
 # We can pass the additional keyword argument `indent=4` to `write_aas_json_file()` to format the JSON file in a more
 # human-readable (but much more space-consuming) manner.
 
-# step 4.4: writing the contents of the ObjectStore to an XML file
+# step 4.3: writing the contents of the ObjectStore to an XML file
 basyx.aas.adapter.xml.write_aas_xml_file('data.xml', obj_store)
 
 

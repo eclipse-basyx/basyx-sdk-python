@@ -31,10 +31,8 @@ class LocalFileBackendTest(unittest.TestCase):
     def test_object_store_add(self):
         test_object = create_example_submodel()
         self.object_store.add(test_object)
-        self.assertEqual(
-            test_object.source,
-            source_core+"fd787262b2743360f7ad03a3b4e9187e4c088aa37303448c9c43fe4c973dac53.json"
-        )
+        # Note that this test is only checking that there are no errors during adding.
+        # The actual logic is tested together with retrieval in `test_retrieval`.
 
     def test_retrieval(self):
         test_object = create_example_submodel()
@@ -48,11 +46,6 @@ class LocalFileBackendTest(unittest.TestCase):
         del test_object
         test_object_retrieved_again = self.object_store.get_identifiable('https://acplt.org/Test_Submodel')
         self.assertIs(test_object_retrieved, test_object_retrieved_again)
-
-        # However, a changed source should invalidate the cached object, so we should get a new copy
-        test_object_retrieved.source = "couchdb://example.com/example/IRI-https%3A%2F%2Facplt.org%2FTest_Submodel"
-        test_object_retrieved_third = self.object_store.get_identifiable('https://acplt.org/Test_Submodel')
-        self.assertIsNot(test_object_retrieved, test_object_retrieved_third)
 
     def test_example_submodel_storing(self) -> None:
         example_submodel = create_example_submodel()
@@ -111,16 +104,3 @@ class LocalFileBackendTest(unittest.TestCase):
             self.object_store.discard(retrieved_submodel)
         self.assertEqual("'No AAS object with id https://acplt.org/Test_Submodel exists in "
                          "local file database'", str(cm.exception))
-
-    def test_editing(self):
-        test_object = create_example_submodel()
-        self.object_store.add(test_object)
-
-        # Test if commit uploads changes
-        test_object.id_short = "SomeNewIdShort"
-        test_object.commit()
-
-        # Test if update restores changes
-        test_object.id_short = "AnotherIdShort"
-        test_object.update()
-        self.assertEqual("SomeNewIdShort", test_object.id_short)

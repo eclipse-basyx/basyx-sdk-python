@@ -573,13 +573,11 @@ class WSGIApp:
         identifiable = self.object_store.get(identifier)
         if not isinstance(identifiable, type_):
             raise NotFound(f"No {type_.__name__} with {identifier} found!")
-        identifiable.update()
         return identifiable
 
     def _get_all_obj_of_type(self, type_: Type[model.provider._IT]) -> Iterator[model.provider._IT]:
         for obj in self.object_store:
             if isinstance(obj, type_):
-                obj.update()
                 yield obj
 
     def _resolve_reference(self, reference: model.ModelReference[model.base._RT]) -> model.base._RT:
@@ -745,7 +743,6 @@ class WSGIApp:
             self.object_store.add(aas)
         except KeyError as e:
             raise Conflict(f"AssetAdministrationShell with Identifier {aas.id} already exists!") from e
-        aas.commit()
         created_resource_url = map_adapter.build(self.get_aas, {
             "aas_id": aas.id
         }, force_external=True)
@@ -772,7 +769,6 @@ class WSGIApp:
         aas = self._get_shell(url_args)
         aas.update_from(HTTPApiDecoder.request_body(request, model.AssetAdministrationShell,
                                                     is_stripped_request(request)))
-        aas.commit()
         return response_t()
 
     def delete_aas(self, request: Request, url_args: Dict, response_t: Type[APIResponse], **_kwargs) -> Response:
@@ -789,7 +785,6 @@ class WSGIApp:
                                   **_kwargs) -> Response:
         aas = self._get_shell(url_args)
         aas.asset_information = HTTPApiDecoder.request_body(request, model.AssetInformation, False)
-        aas.commit()
         return response_t()
 
     def get_aas_submodel_refs(self, request: Request, url_args: Dict, response_t: Type[APIResponse],
@@ -806,14 +801,12 @@ class WSGIApp:
         if sm_ref in aas.submodel:
             raise Conflict(f"{sm_ref!r} already exists!")
         aas.submodel.add(sm_ref)
-        aas.commit()
         return response_t(sm_ref, status=201)
 
     def delete_aas_submodel_refs_specific(self, request: Request, url_args: Dict, response_t: Type[APIResponse],
                                           **_kwargs) -> Response:
         aas = self._get_shell(url_args)
         aas.submodel.remove(self._get_submodel_reference(aas, url_args["submodel_id"]))
-        aas.commit()
         return response_t()
 
     def put_aas_submodel_refs_submodel(self, request: Request, url_args: Dict, response_t: Type[APIResponse],
@@ -826,11 +819,9 @@ class WSGIApp:
         id_changed: bool = submodel.id != new_submodel.id
         # TODO: https://github.com/eclipse-basyx/basyx-python-sdk/issues/216
         submodel.update_from(new_submodel)
-        submodel.commit()
         if id_changed:
             aas.submodel.remove(sm_ref)
             aas.submodel.add(model.ModelReference.from_referable(submodel))
-            aas.commit()
         return response_t()
 
     def delete_aas_submodel_refs_submodel(self, request: Request, url_args: Dict, response_t: Type[APIResponse],
@@ -840,7 +831,6 @@ class WSGIApp:
         submodel = self._resolve_reference(sm_ref)
         self.object_store.remove(submodel)
         aas.submodel.remove(sm_ref)
-        aas.commit()
         return response_t()
 
     def aas_submodel_refs_redirect(self, request: Request, url_args: Dict, map_adapter: MapAdapter,
@@ -869,7 +859,6 @@ class WSGIApp:
             self.object_store.add(submodel)
         except KeyError as e:
             raise Conflict(f"Submodel with Identifier {submodel.id} already exists!") from e
-        submodel.commit()
         created_resource_url = map_adapter.build(self.get_submodel, {
             "submodel_id": submodel.id
         }, force_external=True)
@@ -911,7 +900,6 @@ class WSGIApp:
     def put_submodel(self, request: Request, url_args: Dict, response_t: Type[APIResponse], **_kwargs) -> Response:
         submodel = self._get_submodel(url_args)
         submodel.update_from(HTTPApiDecoder.request_body(request, model.Submodel, is_stripped_request(request)))
-        submodel.commit()
         return response_t()
 
     def get_submodel_submodel_elements(self, request: Request, url_args: Dict, response_t: Type[APIResponse],
@@ -984,7 +972,6 @@ class WSGIApp:
                                                            model.SubmodelElement,  # type: ignore[type-abstract]
                                                            is_stripped_request(request))
         submodel_element.update_from(new_submodel_element)
-        submodel_element.commit()
         return response_t()
 
     def delete_submodel_submodel_elements_id_short_path(self, request: Request, url_args: Dict,
@@ -1043,7 +1030,6 @@ class WSGIApp:
                 f"while {submodel_element!r} has content_type {submodel_element.content_type!r}!")
 
         submodel_element.value = self.file_store.add_file(filename, file_storage.stream, submodel_element.content_type)
-        submodel_element.commit()
         return response_t()
 
     def delete_submodel_submodel_element_attachment(self, request: Request, url_args: Dict,
@@ -1066,7 +1052,6 @@ class WSGIApp:
                 pass
             submodel_element.value = None
 
-        submodel_element.commit()
         return response_t()
 
     def get_submodel_submodel_element_qualifiers(self, request: Request, url_args: Dict, response_t: Type[APIResponse],
@@ -1084,7 +1069,6 @@ class WSGIApp:
         if sm_or_se.qualifier.contains_id("type", qualifier.type):
             raise Conflict(f"Qualifier with type {qualifier.type} already exists!")
         sm_or_se.qualifier.add(qualifier)
-        sm_or_se.commit()
         created_resource_url = map_adapter.build(self.get_submodel_submodel_element_qualifiers, {
             "submodel_id": url_args["submodel_id"],
             "id_shorts": url_args.get("id_shorts") or None,
@@ -1103,7 +1087,6 @@ class WSGIApp:
             raise Conflict(f"A qualifier of type {new_qualifier.type!r} already exists for {sm_or_se!r}")
         sm_or_se.remove_qualifier_by_type(qualifier.type)
         sm_or_se.qualifier.add(new_qualifier)
-        sm_or_se.commit()
         if qualifier_type_changed:
             created_resource_url = map_adapter.build(self.get_submodel_submodel_element_qualifiers, {
                 "submodel_id": url_args["submodel_id"],
@@ -1119,7 +1102,6 @@ class WSGIApp:
         sm_or_se = self._get_submodel_or_nested_submodel_element(url_args)
         qualifier_type = url_args["qualifier_type"]
         self._qualifiable_qualifier_op(sm_or_se, sm_or_se.remove_qualifier_by_type, qualifier_type)
-        sm_or_se.commit()
         return response_t()
 
     # --------- CONCEPT DESCRIPTION ROUTES ---------
@@ -1137,7 +1119,6 @@ class WSGIApp:
             self.object_store.add(concept_description)
         except KeyError as e:
             raise Conflict(f"ConceptDescription with Identifier {concept_description.id} already exists!") from e
-        concept_description.commit()
         created_resource_url = map_adapter.build(self.get_concept_description, {
             "concept_id": concept_description.id
         }, force_external=True)
@@ -1153,7 +1134,6 @@ class WSGIApp:
         concept_description = self._get_concept_description(url_args)
         concept_description.update_from(HTTPApiDecoder.request_body(request, model.ConceptDescription,
                                                                     is_stripped_request(request)))
-        concept_description.commit()
         return response_t()
 
     def delete_concept_description(self, request: Request, url_args: Dict, response_t: Type[APIResponse],

@@ -18,32 +18,6 @@ source_core: str = "couchdb://" + TEST_CONFIG["couchdb"]["url"].lstrip("http://"
                    TEST_CONFIG["couchdb"]["database"] + "/"
 
 
-class CouchDBBackendOfflineMethodsTest(unittest.TestCase):
-    def test_parse_source(self):
-        couchdb.register_credentials(url="couchdb.plt.rwth-aachen.de:5984",
-                                     username="test_user",
-                                     password="test_password")
-
-        url = couchdb.CouchDBBackend._parse_source(
-            "couchdbs://couchdb.plt.rwth-aachen.de:5984/path_to_db/path_to_doc"
-        )
-        expected_url = "https://couchdb.plt.rwth-aachen.de:5984/path_to_db/path_to_doc"
-        self.assertEqual(expected_url, url)
-
-        url = couchdb.CouchDBBackend._parse_source(
-            "couchdb://couchdb.plt.rwth-aachen.de:5984/path_to_db/path_to_doc"
-        )
-        expected_url = "http://couchdb.plt.rwth-aachen.de:5984/path_to_db/path_to_doc"
-        self.assertEqual(expected_url, url)
-
-        with self.assertRaises(couchdb.CouchDBSourceError) as cm:
-            couchdb.CouchDBBackend._parse_source("wrong_scheme:plt.rwth-aachen.couchdb:5984/path_to_db/path_to_doc")
-        self.assertEqual("Source has wrong format. "
-                         "Expected to start with {couchdb://, couchdbs://}, got "
-                         "{wrong_scheme:plt.rwth-aachen.couchdb:5984/path_to_db/path_to_doc}",
-                         str(cm.exception))
-
-
 @unittest.skipUnless(COUCHDB_OKAY, "No CouchDB is reachable at {}/{}: {}".format(TEST_CONFIG['couchdb']['url'],
                                                                                  TEST_CONFIG['couchdb']['database'],
                                                                                  COUCHDB_ERROR))
@@ -62,7 +36,8 @@ class CouchDBBackendTest(unittest.TestCase):
     def test_object_store_add(self):
         test_object = create_example_submodel()
         self.object_store.add(test_object)
-        self.assertEqual(test_object.source, source_core+"https%3A%2F%2Facplt.org%2FTest_Submodel")
+        # Note that this test is only checking that there are no errors during adding.
+        # The actual logic is tested together with retrieval in `test_retrieval`.
 
     def test_retrieval(self):
         test_object = create_example_submodel()
@@ -76,11 +51,6 @@ class CouchDBBackendTest(unittest.TestCase):
         del test_object
         test_object_retrieved_again = self.object_store.get_identifiable('https://acplt.org/Test_Submodel')
         self.assertIs(test_object_retrieved, test_object_retrieved_again)
-
-        # However, a changed source should invalidate the cached object, so we should get a new copy
-        test_object_retrieved.source = "couchdb://example.com/example/https%3A%2F%2Facplt.org%2FTest_Submodel"
-        test_object_retrieved_third = self.object_store.get_identifiable('https://acplt.org/Test_Submodel')
-        self.assertIsNot(test_object_retrieved, test_object_retrieved_third)
 
     def test_example_submodel_storing(self) -> None:
         example_submodel = create_example_submodel()
@@ -138,46 +108,3 @@ class CouchDBBackendTest(unittest.TestCase):
             self.object_store.discard(retrieved_submodel)
         self.assertEqual("'No AAS object with id https://acplt.org/Test_Submodel exists in "
                          "CouchDB database'", str(cm.exception))
-
-    def test_conflict_errors(self):
-        # Preperation: add object and retrieve it from the database
-        example_submodel = create_example_submodel()
-        self.object_store.add(example_submodel)
-        retrieved_submodel = self.object_store.get_identifiable('https://acplt.org/Test_Submodel')
-
-        # Simulate a concurrent modification (Commit submodel, while preventing that the couchdb revision store is
-        # updated)
-        with unittest.mock.patch("basyx.aas.backend.couchdb.set_couchdb_revision"):
-            retrieved_submodel.commit()
-
-        # Committing changes to the retrieved object should now raise a conflict error
-        retrieved_submodel.id_short = "myOtherNewIdShort"
-        with self.assertRaises(couchdb.CouchDBConflictError) as cm:
-            retrieved_submodel.commit()
-        self.assertEqual("Could not commit changes to id https://acplt.org/Test_Submodel due to a "
-                         "concurrent modification in the database.", str(cm.exception))
-
-        # Deleting the submodel with safe_delete should also raise a conflict error. Deletion without safe_delete should
-        # work
-        with self.assertRaises(couchdb.CouchDBConflictError) as cm:
-            self.object_store.discard(retrieved_submodel, True)
-        self.assertEqual("Object with id https://acplt.org/Test_Submodel has been modified in the "
-                         "database since the version requested to be deleted.", str(cm.exception))
-        self.object_store.discard(retrieved_submodel, False)
-        self.assertEqual(0, len(self.object_store))
-
-        # Committing after deletion should not raise a conflict error due to removal of the source attribute
-        retrieved_submodel.commit()
-
-    def test_editing(self):
-        test_object = create_example_submodel()
-        self.object_store.add(test_object)
-
-        # Test if commit uploads changes
-        test_object.id_short = "SomeNewIdShort"
-        test_object.commit()
-
-        # Test if update restores changes
-        test_object.id_short = "AnotherIdShort"
-        test_object.update()
-        self.assertEqual("SomeNewIdShort", test_object.id_short)

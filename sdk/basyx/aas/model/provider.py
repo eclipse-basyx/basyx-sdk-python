@@ -65,8 +65,9 @@ class AbstractObjectStore(AbstractObjectProvider, MutableSet[_IT], Generic[_IT],
 
     ObjectStores are special ObjectProvides that – in addition to retrieving objects by
     :class:`~basyx.aas.model.base.Identifier` – allow to add and delete objects (i.e. behave like a Python set).
-    This includes local object stores (like :class:`~.DictObjectStore`) and database
-    :class:`Backends <basyx.aas.backend.backends.Backend>`.
+    This includes local object stores (like :class:`~.DictObjectStore`) and specific object stores
+    (like :class:`~basyx.aas.backend.couchdb.CouchDBObjectStore` and
+    :class `~basyx.aas.backend.local_file.LocalFileObjectStore`).
 
     The AbstractObjectStore inherits from the :class:`~collections.abc.MutableSet` abstract collections class and
     therefore implements all the functions of this class.
