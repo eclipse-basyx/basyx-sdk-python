@@ -94,7 +94,7 @@ the further steps via the comments.
 In order to effectively communicate, there are some conventions to respect when writing
 commit messages and pull requests.
 
-Similarily to when creating an issue, the commit title, as well as the PR title should 
+Similarly to when creating an issue, the commit title, as well as the PR title should 
 be as short as possible, ideally 72 characters or fewer using imperative language.
 If a specific module is affected, please mention it at the beginning of the title.
 

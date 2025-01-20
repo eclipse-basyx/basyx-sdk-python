@@ -1,4 +1,4 @@
-# Copyright (c) 2020 the Eclipse BaSyx Authors
+# Copyright (c) 2024 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -13,8 +13,6 @@ import unittest
 import io
 
 import tempfile
-
-import basyx.aas.compliance_tool
 from basyx.aas import model
 from basyx.aas.adapter import aasx
 from basyx.aas.adapter.json import read_aas_json_file
@@ -25,14 +23,21 @@ from basyx.aas.examples.data._helper import AASDataChecker
 
 def _run_compliance_tool(*compliance_tool_args, **kwargs) -> subprocess.CompletedProcess:
     """
-    This function runs the compliance tool using subprocess.run() while adjusting the PYTHONPATH environment variable
-    and setting the stdout and stderr parameters of subprocess.run() to PIPE.
+    This function runs the compliance tool using subprocess.run()
+    and sets the stdout and stderr parameters of subprocess.run() to PIPE.
     Positional arguments are passed to the compliance tool, while keyword arguments are passed to subprocess.run().
     """
     env = os.environ.copy()
-    env['PYTHONPATH'] = "{}:{}".format(os.environ.get('PYTHONPATH', ''),
-                                       os.path.join(os.path.dirname(basyx.__file__), os.pardir))
-    compliance_tool_path = os.path.join(os.path.dirname(basyx.aas.compliance_tool.__file__), 'cli.py')
+    parent_dir = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'aas_compliance_tool'
+    )
+    env["PYTHONPATH"] = parent_dir + os.pathsep + env.get("PYTHONPATH", "")
+    compliance_tool_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'aas_compliance_tool',
+        'cli.py'
+    )
     return subprocess.run([sys.executable, compliance_tool_path] + list(compliance_tool_args), stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, env=env, **kwargs)
 

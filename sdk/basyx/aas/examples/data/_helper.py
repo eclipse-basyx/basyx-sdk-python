@@ -213,6 +213,18 @@ class AASDataChecker(DataChecker):
         :return: The value of expression to be used in control statements
         """
         self.check_attribute_equal(object_, "semantic_id", expected_object.semantic_id)
+        if isinstance(expected_object.semantic_id, model.ModelReference) and self.check(
+            isinstance(object_.semantic_id, model.ModelReference),
+            "{} must be a ModelReference".format(repr(object_)),
+        ):  # type: ignore
+            self.check(
+                object_.semantic_id.type == expected_object.semantic_id.type,  # type: ignore
+                "ModelReference type {} of {} must be equal to {}".format(
+                    object_.semantic_id.type,  # type: ignore
+                    repr(object_),
+                    expected_object.semantic_id.type,
+                ),
+            )
         for suppl_semantic_id in expected_object.supplemental_semantic_id:
             given_semantic_id = self._find_reference(suppl_semantic_id, object_.supplemental_semantic_id)
             self.check(given_semantic_id is not None, f"{object_!r} must have supplementalSemanticId",

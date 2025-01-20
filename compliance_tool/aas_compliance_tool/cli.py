@@ -1,4 +1,4 @@
-# Copyright (c) 2020 the Eclipse BaSyx Authors
+# Copyright (c) 2024 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -19,11 +19,12 @@ import pyecma376_2
 
 from basyx.aas.adapter import aasx
 from basyx.aas.adapter.xml import write_aas_xml_file
-from basyx.aas.compliance_tool import compliance_check_xml as compliance_tool_xml, \
-    compliance_check_json as compliance_tool_json, compliance_check_aasx as compliance_tool_aasx
+from aas_compliance_tool import compliance_check_xml as compliance_tool_xml, \
+    compliance_check_json as compliance_tool_json, \
+    compliance_check_aasx as compliance_tool_aasx
 from basyx.aas.adapter.json import write_aas_json_file
 from basyx.aas.examples.data import create_example, create_example_aas_binding, TEST_PDF_FILE
-from basyx.aas.compliance_tool.state_manager import ComplianceToolStateManager, Status
+from aas_compliance_tool.state_manager import ComplianceToolStateManager, Status
 
 
 def parse_cli_arguments() -> argparse.ArgumentParser:
@@ -71,7 +72,7 @@ def parse_cli_arguments() -> argparse.ArgumentParser:
                              'f or file_compare: checks if two given files contain the same aas elements in any order')
     parser.add_argument('file_1', help="path to file 1")
     parser.add_argument('file_2', nargs='?', default=None, help="path to file 2: is required if action f or files is "
-                                                                "choosen")
+                                                                "chosen")
     parser.add_argument('-v', '--verbose', help="Print detailed information for each check. Multiple -v options "
                                                 "increase the verbosity. 1: Detailed error information, 2: Additional "
                                                 "detailed success information", action='count', default=0)

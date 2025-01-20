@@ -1,4 +1,4 @@
-# Copyright (c) 2020 the Eclipse BaSyx Authors
+# Copyright (c) 2024 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -7,7 +7,7 @@
 import logging
 import unittest
 
-from basyx.aas.compliance_tool.state_manager import ComplianceToolStateManager, Status
+from aas_compliance_tool.state_manager import ComplianceToolStateManager, Status
 from basyx.aas.examples.data._helper import DataChecker
 
 

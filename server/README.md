@@ -7,7 +7,7 @@ The server currently implements the following interfaces:
 - [Submodel Repository Service][5]
 
 It uses the [HTTP API][1] and the [AASX][7], [JSON][8], and [XML][9] Adapters of the [BaSyx Python SDK][3], to serve regarding files from a given directory.
-The files are only read, chages won't persist.
+The files are only read, changes won't persist.
 
 Alternatively, the container can also be told to use the [Local-File Backend][2] instead, which stores AAS and Submodels as individual JSON files and allows for persistent changes (except supplementary files, i.e. files referenced by `File` submodel elements).
 See [below](#options) on how to configure this.

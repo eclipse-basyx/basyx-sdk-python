@@ -8,7 +8,7 @@ These are the currently implemented specifications:
 
 | Specification                         | Version                                                                                                                                                                         |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Part 1: Metamodel                     | [v3.0.1 (01001-3-1)](https://industrialdigitaltwin.org/wp-content/uploads/2024/06/IDTA-01001-3-0-1_SpecificationAssetAdministrationShell_Part1_Metamodel.pdf)                   |
+| Part 1: Metamodel                     | [v3.0.1 (01001-3-0-1)](https://industrialdigitaltwin.org/wp-content/uploads/2024/06/IDTA-01001-3-0-1_SpecificationAssetAdministrationShell_Part1_Metamodel.pdf)                   |
 | Schemata (JSONSchema, XSD)            | [v3.0.8 (IDTA-01001-3-0-1_schemasV3.0.8)](https://github.com/admin-shell-io/aas-specs/releases/tag/IDTA-01001-3-0-1_schemasV3.0.8)                                              |
 | Part 2: API                           | [v3.0 (01002-3-0)](https://industrialdigitaltwin.org/en/wp-content/uploads/sites/2/2023/06/IDTA-01002-3-0_SpecificationAssetAdministrationShell_Part2_API_.pdf)                 |
 | Part 3a: Data Specification IEC 61360 | [v3.0 (01003-a-3-0)](https://industrialdigitaltwin.org/wp-content/uploads/2023/04/IDTA-01003-a-3-0_SpecificationAssetAdministrationShell_Part3a_DataSpecification_IEC61360.pdf) |

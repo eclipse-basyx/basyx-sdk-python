@@ -1,4 +1,4 @@
-# Copyright (c) 2020 the Eclipse BaSyx Authors
+# Copyright (c) 2024 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -19,14 +19,14 @@ from lxml import etree  # type: ignore
 
 import pyecma376_2
 
-from . import compliance_check_json, compliance_check_xml
+from aas_compliance_tool import compliance_check_json, compliance_check_xml
 from basyx.aas import model
 from basyx.aas.adapter import aasx
 from basyx.aas.adapter.xml import xml_deserialization
 from basyx.aas.adapter.json import json_deserialization
 from basyx.aas.examples.data import example_aas, create_example_aas_binding
 from basyx.aas.examples.data._helper import AASDataChecker, DataChecker
-from .state_manager import ComplianceToolStateManager, Status
+from aas_compliance_tool.state_manager import ComplianceToolStateManager, Status
 
 
 def check_deserialization(file_path: str, state_manager: ComplianceToolStateManager,

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 the Eclipse BaSyx Authors
+# Copyright (c) 2024 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -7,8 +7,8 @@
 import os
 import unittest
 
-from basyx.aas.compliance_tool import compliance_check_aasx as compliance_tool
-from basyx.aas.compliance_tool.state_manager import ComplianceToolStateManager, Status
+from aas_compliance_tool import compliance_check_aasx as compliance_tool
+from aas_compliance_tool.state_manager import ComplianceToolStateManager, Status
 
 
 class ComplianceToolAASXTest(unittest.TestCase):
@@ -20,7 +20,9 @@ class ComplianceToolAASXTest(unittest.TestCase):
         compliance_tool.check_deserialization(file_path_1, manager)
         self.assertEqual(2, len(manager.steps))
         self.assertEqual(Status.FAILED, manager.steps[0].status)
-        self.assertIn("is not a valid ECMA376-2 (OPC) file", manager.format_step(0, verbose_level=1))
+        # we should expect a FileNotFound error here since the file does not exist and that is the first error
+        # aasx.py will throw if you try to open a file that does not exist.
+        self.assertIn("No such file or directory:", manager.format_step(0, verbose_level=1))
         self.assertEqual(Status.NOT_EXECUTED, manager.steps[1].status)
 
         # Todo add more tests for checking wrong aasx files
