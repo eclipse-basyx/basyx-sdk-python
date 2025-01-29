@@ -48,7 +48,7 @@ import werkzeug.exceptions
 import werkzeug.routing
 import werkzeug.urls
 import werkzeug.utils
-from werkzeug.exceptions import BadRequest, Conflict, NotFound, UnprocessableEntity
+from werkzeug.exceptions import BadRequest, Conflict, NotFound
 from werkzeug.routing import MapAdapter, Rule, Submount
 from werkzeug.wrappers import Request, Response
 from werkzeug.datastructures import FileStorage
@@ -252,7 +252,13 @@ def http_exception_to_response(exception: werkzeug.exceptions.HTTPException, res
 
 
 def is_stripped_request(request: Request) -> bool:
-    return request.args.get("level") == "core"
+    level = request.args.get("level")
+    if level not in {"deep", "core", None}:
+        raise BadRequest(f"Level {level} is not a valid level!")
+    extent = request.args.get("extent")
+    if extent is not None:
+        raise werkzeug.exceptions.NotImplemented(f"The parameter extent is not yet implemented for this server!")
+    return level == "core"
 
 
 T = TypeVar("T")
@@ -300,7 +306,7 @@ class HTTPApiDecoder:
     @classmethod
     def assert_type(cls, obj: object, type_: Type[T]) -> T:
         if not isinstance(obj, type_):
-            raise UnprocessableEntity(f"Object {obj!r} is not of type {type_.__name__}!")
+            raise BadRequest(f"Object {obj!r} is not of type {type_.__name__}!")
         return obj
 
     @classmethod
@@ -312,10 +318,10 @@ class HTTPApiDecoder:
             parsed = json.loads(data, cls=decoder)
             if not isinstance(parsed, list):
                 if not expect_single:
-                    raise UnprocessableEntity(f"Expected List[{expect_type.__name__}], got {parsed!r}!")
+                    raise BadRequest(f"Expected List[{expect_type.__name__}], got {parsed!r}!")
                 parsed = [parsed]
             elif expect_single:
-                raise UnprocessableEntity(f"Expected a single object of type {expect_type.__name__}, got {parsed!r}!")
+                raise BadRequest(f"Expected a single object of type {expect_type.__name__}, got {parsed!r}!")
             # TODO: the following is ugly, but necessary because references aren't self-identified objects
             #  in the json schema
             # TODO: json deserialization will always create an ModelReference[Submodel], xml deserialization determines
@@ -339,7 +345,7 @@ class HTTPApiDecoder:
                 return [constructor(obj, *args) for obj in parsed]
 
         except (KeyError, ValueError, TypeError, json.JSONDecodeError, model.AASConstraintViolation) as e:
-            raise UnprocessableEntity(str(e)) from e
+            raise BadRequest(str(e)) from e
 
         return [cls.assert_type(obj, expect_type) for obj in parsed]
 
@@ -369,9 +375,9 @@ class HTTPApiDecoder:
             f: BaseException = e
             while f.__cause__ is not None:
                 f = f.__cause__
-            raise UnprocessableEntity(str(f)) from e
+            raise BadRequest(str(f)) from e
         except (etree.XMLSyntaxError, model.AASConstraintViolation) as e:
-            raise UnprocessableEntity(str(e)) from e
+            raise BadRequest(str(e)) from e
         return cls.assert_type(rv, expect_type)
 
     @classmethod
@@ -843,7 +849,7 @@ class WSGIApp:
         aas.commit()
         return response_t()
 
-    def aas_submodel_refs_redirect(self, request: Request, url_args: Dict, map_adapter: MapAdapter,
+    def aas_submodel_refs_redirect(self, request: Request, url_args: Dict, map_adapter: MapAdapter, response_t=None,
                                    **_kwargs) -> Response:
         aas = self._get_shell(url_args)
         # the following makes sure the reference exists
@@ -852,7 +858,7 @@ class WSGIApp:
             "submodel_id": url_args["submodel_id"]
         }, force_external=True)
         if "path" in url_args:
-            redirect_url += url_args["path"] + "/"
+            redirect_url += "/" + url_args["path"]
         if request.query_string:
             redirect_url += "?" + request.query_string.decode("ascii")
         return werkzeug.utils.redirect(redirect_url, 307)
@@ -940,6 +946,8 @@ class WSGIApp:
     def get_submodel_submodel_elements_id_short_path_metadata(self, request: Request, url_args: Dict,
                                                               response_t: Type[APIResponse], **_kwargs) -> Response:
         submodel_element = self._get_submodel_submodel_elements_id_short_path(url_args)
+        if isinstance(submodel_element, model.Capability) or isinstance(submodel_element, model.Operation):
+            raise BadRequest(f"{submodel_element.id_short} does not allow the content modifier metadata!")
         return response_t(submodel_element, stripped=True)
 
     def get_submodel_submodel_elements_id_short_path_reference(self, request: Request, url_args: Dict,
