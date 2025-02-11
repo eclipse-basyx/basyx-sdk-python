@@ -185,6 +185,22 @@ jobs:
       run: |
         python -m build
 
+  repository-check-copyright:
+    # This job checks that the copyright year in the header of all files is up to date
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Ensure full history is available
+    - name: Install required dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bash git
+    - name: Run copyright check
+      run: |
+        chmod +x ./etc/scripts/set_copyright_year.sh
+        ./etc/scripts/set_copyright_year.sh --check
+
 
   compliance-tool-test:
     # This job runs the unittests on the python versions specified down at the matrix

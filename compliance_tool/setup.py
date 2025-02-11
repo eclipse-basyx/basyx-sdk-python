@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2024-2021 the Eclipse BaSyx Authors
+# Copyright (c) 2025 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
