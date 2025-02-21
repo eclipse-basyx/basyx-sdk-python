@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
     ports:
     - "8080:80"
     volumes:
