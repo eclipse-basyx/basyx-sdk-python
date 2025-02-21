@@ -1,4 +1,4 @@
-# Copyright (c) 2023 the Eclipse BaSyx Authors
+# Copyright (c) 2025 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -11,7 +11,7 @@ This module implements Registries for the AAS, in order to enable resolving glob
 """
 
 import abc
-from typing import MutableSet, Iterator, Generic, TypeVar, Dict, List, Optional, Iterable
+from typing import MutableSet, Iterator, Generic, TypeVar, Dict, List, Optional, Iterable, Set
 
 from .base import Identifier, Identifiable
 
@@ -84,6 +84,15 @@ class DictObjectStore(AbstractObjectStore[_IT], Generic[_IT]):
     """
     A local in-memory object store for :class:`~basyx.aas.model.base.Identifiable` objects, backed by a dict, mapping
     :class:`~basyx.aas.model.base.Identifier` → :class:`~basyx.aas.model.base.Identifiable`
+
+    .. note::
+        The `DictObjectStore` provides efficient retrieval of objects by their :class:`~basyx.aas.model.base.Identifier`
+        However, since object stores are not referenced via the parent attribute, the mapping is not updated
+        if the :class:`~basyx.aas.model.base.Identifier` of an :class:`~basyx.aas.model.base.Identifiable` changes.
+        For more details, see [issue #216](https://github.com/eclipse-basyx/basyx-python-sdk/issues/216).
+        As a result, the `DictObjectStore` is unsuitable for storing objects whose
+        :class:`~basyx.aas.model.base.Identifier` may change.
+        In such cases, consider using a :class:`~.SetObjectStore` instead.
     """
     def __init__(self, objects: Iterable[_IT] = ()) -> None:
         self._backend: Dict[Identifier, _IT] = {}
@@ -115,6 +124,64 @@ class DictObjectStore(AbstractObjectStore[_IT], Generic[_IT]):
 
     def __iter__(self) -> Iterator[_IT]:
         return iter(self._backend.values())
+
+
+class SetObjectStore(AbstractObjectStore[_IT], Generic[_IT]):
+    """
+    A local in-memory object store for :class:`~basyx.aas.model.base.Identifiable` objects, backed by a set
+
+    .. note::
+        The `SetObjectStore` is slower than the `DictObjectStore` for retrieval of objects, because it has to iterate
+        over all objects to find the one with the correct :class:`~basyx.aas.model.base.Identifier`.
+        On the other hand, the `SetObjectStore` is more secure, because it is less affected by changes in the
+        :class:`~basyx.aas.model.base.Identifier` of an :class:`~basyx.aas.model.base.Identifiable` object.
+        Therefore, the `SetObjectStore` is suitable for storing objects whose :class:`~basyx.aas.model.base.Identifier`
+        may change.
+    """
+    def __init__(self, objects: Iterable[_IT] = ()) -> None:
+        self._backend: Set[_IT] = set()
+        for x in objects:
+            self.add(x)
+
+    def get_identifiable(self, identifier: Identifier) -> _IT:
+        for x in self._backend:
+            if x.id == identifier:
+                return x
+        raise KeyError(identifier)
+
+    def add(self, x: _IT) -> None:
+        if x in self:
+            # Object is already in store
+            return
+        try:
+            self.get_identifiable(x.id)
+        except KeyError:
+            self._backend.add(x)
+        else:
+            raise KeyError(f"Identifiable object with same id {x.id} is already stored in this store")
+
+    def discard(self, x: _IT) -> None:
+        self._backend.discard(x)
+
+    def remove(self, x: _IT) -> None:
+        self._backend.remove(x)
+
+    def __contains__(self, x: object) -> bool:
+        if isinstance(x, Identifier):
+            try:
+                self.get_identifiable(x)
+                return True
+            except KeyError:
+                return False
+        if not isinstance(x, Identifiable):
+            return False
+        return x in self._backend
+
+    def __len__(self) -> int:
+        return len(self._backend)
+
+    def __iter__(self) -> Iterator[_IT]:
+        return iter(self._backend)
 
 
 class ObjectProviderMultiplexer(AbstractObjectProvider):

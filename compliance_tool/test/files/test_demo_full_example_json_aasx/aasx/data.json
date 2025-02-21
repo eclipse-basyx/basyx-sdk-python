@@ -507,7 +507,7 @@
                 },
                 {
                     "language": "de",
-                    "text": "Ein Beispiel-BillofMaterial-Submodel f\u00fcr eine Test-Anwendung"
+                    "text": "Ein Beispiel-BillOfMaterial-Submodel f\u00fcr eine Test-Anwendung"
                 }
             ],
             "modelType": "Submodel",
@@ -1317,7 +1317,7 @@
                                 },
                                 {
                                     "language": "de",
-                                    "text": "Beispielswert f\u00fcr ein MulitLanguageProperty-Element"
+                                    "text": "Beispielwert f\u00fcr ein MultiLanguageProperty-Element"
                                 }
                             ],
                             "valueId": {
@@ -2289,7 +2289,7 @@
                                 },
                                 {
                                     "language": "de",
-                                    "text": "Beispiel MulitLanguageProperty Element"
+                                    "text": "Beispiel MultiLanguageProperty Element"
                                 }
                             ],
                             "modelType": "MultiLanguageProperty",
@@ -2309,7 +2309,7 @@
                                 },
                                 {
                                     "language": "de",
-                                    "text": "Beispielswert f\u00fcr ein MulitLanguageProperty-Element"
+                                    "text": "Beispielwert f\u00fcr ein MultiLanguageProperty-Element"
                                 }
                             ]
                         },
@@ -2833,7 +2833,7 @@
                                 },
                                 {
                                     "language": "de",
-                                    "text": "Beispiel MulitLanguageProperty Element"
+                                    "text": "Beispiel MultiLanguageProperty Element"
                                 }
                             ],
                             "modelType": "MultiLanguageProperty",

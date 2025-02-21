@@ -1,4 +1,4 @@
-# Copyright (c) 2023 the Eclipse BaSyx Authors
+# Copyright (c) 2025 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -340,10 +340,16 @@ class AASFromJsonDecoder(json.JSONDecoder):
         if reference_type is not model.ModelReference:
             raise ValueError(f"Expected a reference of type {model.ModelReference}, got {reference_type}!")
         keys = [cls._construct_key(key_data) for key_data in _get_ts(dct, "keys", list)]
-        if keys and not issubclass(KEY_TYPES_CLASSES_INVERSE.get(keys[-1].type, type(None)), type_):
+        last_key_type = KEY_TYPES_CLASSES_INVERSE.get(keys[-1].type, type(None))
+        if keys and not issubclass(last_key_type, type_):
             logger.warning("type %s of last key of reference to %s does not match reference type %s",
                            keys[-1].type.name, " / ".join(str(k) for k in keys), type_.__name__)
-        return object_class(tuple(keys), type_, cls._construct_reference(_get_ts(dct, 'referredSemanticId', dict))
+        # Infer type the model refence points to using `last_key_type` instead of `type_`.
+        # `type_` is often a `model.Referable`, which is more abstract than e.g. a `model.ConceptDescription`,
+        # leading to information loss while deserializing.
+        # TODO Remove this fix, when this function is called with correct `type_`
+        return object_class(tuple(keys), last_key_type,
+                            cls._construct_reference(_get_ts(dct, 'referredSemanticId', dict))
                             if 'referredSemanticId' in dct else None)
 
     @classmethod

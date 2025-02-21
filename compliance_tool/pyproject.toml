@@ -13,18 +13,18 @@ build-backend = "setuptools.build_meta"
 # - Allows for automatic versioning between releases (e.g., 1.0.1.dev4+g12345)
 # If you want to use the version anywhere in the code, use
 # ```
-# from basyx.version import version
+# from aas_compliance_tool.version import version
 # print(f"Project version: {version}")
 # ```
 root = ".."  # Defines the path to the root of the repository
-version_file = "basyx/version.py"
+version_file = "aas_compliance_tool/version.py"
 
 [project]
-name = "basyx-python-sdk"
+name = "aas_compliance_tool"
 dynamic = ["version"]
-description = "The Eclipse BaSyx Python SDK, an implementation of the Asset Administration Shell for Industry 4.0 systems"
+description = "AAS compliance checker based on the Eclipse BaSyx Python SDK"
 authors = [
-    { name = "The Eclipse BaSyx Authors", email = "admins@iat.rwth-aachen.de" }
+    { name = "The AAS Compliance Tool authors", email = "admins@iat.rwth-aachen.de" }
 ]
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -36,11 +36,9 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "lxml>=4.2,<5",
-    "python-dateutil>=2.8,<3",
-    "pyecma376-2>=1.0.1",
-    "urllib3>=1.26,<3",
-    "Werkzeug>=3.0.3,<4",
+    "pyecma376-2>=0.2.4",
+    "jsonschema>=4.21.1",
+    "basyx-python-sdk>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -49,19 +47,14 @@ dev = [
     "pycodestyle",
     "codeblocks",
     "coverage",
-    "schemathesis~=3.7",
-    "jsonschema~=4.7",
-    "hypothesis~=6.13",
-    "types-python-dateutil",
-    "lxml-stubs~=0.5.1",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/eclipse-basyx/basyx-python-sdk"
 
 [tool.setuptools]
-packages = { find = { include = ["basyx*"], exclude = ["test*"] } }
+packages = { find = { include = ["aas_compliance_tool*"], exclude = ["test*"] } }
 
 [tool.setuptools.package-data]
-basyx = ["py.typed"]
-"basyx.aas.examples.data" = ["TestFile.pdf"]
+aas_compliance_tool = ["py.typed"]
+

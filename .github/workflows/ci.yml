@@ -14,9 +14,9 @@ jobs:
       run:
         working-directory: ./etc/scripts
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.X_PYTHON_MIN_VERSION }}
       - name: Install Python dependencies
@@ -29,12 +29,14 @@ jobs:
             ${{ env.X_PYTHON_MIN_VERSION }} \
             ${{ env.X_PYTHON_MAX_VERSION }}
 
-      - name: Check Python Versions coincide with the SDKs pyproject.toml
+      - name: Check Python Versions coincide with all pyproject.toml Files
         run: |
-          python check_python_versions_coincide.py \
-            ../../sdk/pyproject.toml \
-            ${{ env.X_PYTHON_MIN_VERSION }} \
-            ${{ env.X_PYTHON_MAX_VERSION }}
+          for file in ../../sdk/pyproject.toml ../../compliance_tool/pyproject.toml; do
+            python check_python_versions_coincide.py \
+              $file \
+              ${{ env.X_PYTHON_MIN_VERSION }} \
+              ${{ env.X_PYTHON_MAX_VERSION }}
+          done
 
       # Todo: Check other pyproject.toml here as well, as we add them
 
@@ -72,7 +74,7 @@ jobs:
           exit 1
         fi
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Collect schema files from aas-specs
@@ -104,7 +106,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install Python dependencies
@@ -127,7 +129,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install Python dependencies
@@ -153,7 +155,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install Python dependencies
@@ -174,7 +176,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install dependencies
@@ -185,28 +187,45 @@ jobs:
       run: |
         python -m build
 
+  repository-check-copyright:
+    # This job checks that the copyright year in the header of all files is up to date
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Ensure full history is available
+    - name: Install required dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bash git
+    - name: Run copyright check
+      run: |
+        chmod +x ./etc/scripts/set_copyright_year.sh
+        ./etc/scripts/set_copyright_year.sh --check
+
 
   compliance-tool-test:
     # This job runs the unittests on the python versions specified down at the matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.10", "3.12"]
+        python-version: ["3.9", "3.12"]
     defaults:
       run:
         working-directory: ./compliance_tool
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Python dependencies
+      # install the local sdk in editable mode so it does not get overwritten
       run: |
         python -m pip install --upgrade pip
-        pip install coverage
-        pip install -r requirements.txt
+        pip install -e ../sdk[dev]
+        pip install .[dev]
     - name: Test with coverage + unittest
       run: |
         coverage run --source=aas_compliance_tool -m unittest
@@ -223,16 +242,17 @@ jobs:
       run:
         working-directory: ./compliance_tool
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ env.X_PYTHON_VERSION }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.X_PYTHON_VERSION }}
+        python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install Python dependencies
+      # install the local sdk in editable mode so it does not get overwritten
       run: |
         python -m pip install --upgrade pip
-        pip install pycodestyle mypy
-        pip install -r requirements.txt
+        pip install -e ../sdk[dev]
+        pip install .[dev]
     - name: Check typing with MyPy
       run: |
         mypy ./aas_compliance_tool test
@@ -248,16 +268,17 @@ jobs:
       run:
         working-directory: ./compliance_tool
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ env.X_PYTHON_VERSION }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.X_PYTHON_VERSION }}
+        python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install Python dependencies
+      # install the local sdk in editable mode so it does not get overwritten
       run: |
         python -m pip install --upgrade pip
-        pip install pycodestyle mypy codeblocks
-        pip install -r requirements.txt
+        pip install -e ../sdk[dev]
+        pip install .[dev]
     - name: Check typing with MyPy
       run: |
         mypy <(codeblocks python README.md)
@@ -276,18 +297,18 @@ jobs:
       run:
         working-directory: ./compliance_tool
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ env.X_PYTHON_VERSION }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ env.X_PYTHON_MIN_VERSION }}
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.X_PYTHON_VERSION }}
+        python-version: ${{ env.X_PYTHON_MIN_VERSION }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel
+        pip install build
     - name: Create source and wheel dist
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build
 
   server-package:
     # This job checks if we can build our server package

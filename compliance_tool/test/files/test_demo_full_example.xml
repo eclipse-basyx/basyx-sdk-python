@@ -486,7 +486,7 @@
         </aas:langStringTextType>
         <aas:langStringTextType>
           <aas:language>de</aas:language>
-          <aas:text>Ein Beispiel-BillofMaterial-Submodel für eine Test-Anwendung</aas:text>
+          <aas:text>Ein Beispiel-BillOfMaterial-Submodel für eine Test-Anwendung</aas:text>
         </aas:langStringTextType>
       </aas:description>
       <aas:administration>
@@ -1424,7 +1424,7 @@
                 </aas:langStringTextType>
                 <aas:langStringTextType>
                   <aas:language>de</aas:language>
-                  <aas:text>Beispielswert für ein MulitLanguageProperty-Element</aas:text>
+                  <aas:text>Beispielwert für ein MultiLanguageProperty-Element</aas:text>
                 </aas:langStringTextType>
               </aas:value>
               <aas:valueId>
@@ -2109,7 +2109,7 @@
                 </aas:langStringTextType>
                 <aas:langStringTextType>
                   <aas:language>de</aas:language>
-                  <aas:text>Beispiel MulitLanguageProperty Element</aas:text>
+                  <aas:text>Beispiel MultiLanguageProperty Element</aas:text>
                 </aas:langStringTextType>
               </aas:description>
               <aas:semanticId>
@@ -2128,7 +2128,7 @@
                 </aas:langStringTextType>
                 <aas:langStringTextType>
                   <aas:language>de</aas:language>
-                  <aas:text>Beispielswert für ein MulitLanguageProperty-Element</aas:text>
+                  <aas:text>Beispielwert für ein MultiLanguageProperty-Element</aas:text>
                 </aas:langStringTextType>
               </aas:value>
             </aas:multiLanguageProperty>
@@ -2632,7 +2632,7 @@
                     </aas:langStringTextType>
                     <aas:langStringTextType>
                       <aas:language>de</aas:language>
-                      <aas:text>Beispiel MulitLanguageProperty Element</aas:text>
+                      <aas:text>Beispiel MultiLanguageProperty Element</aas:text>
                     </aas:langStringTextType>
                   </aas:description>
                   <aas:semanticId>

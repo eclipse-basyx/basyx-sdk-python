@@ -1,4 +1,4 @@
-# Copyright (c) 2024 the Eclipse BaSyx Authors
+# Copyright (c) 2025 the Eclipse BaSyx Authors
 #
 # This program and the accompanying materials are made available under the terms of the MIT License, available in
 # the LICENSE file of this project.
@@ -402,17 +402,19 @@ class AASXWriter:
         concept_descriptions: List[model.ConceptDescription] = []
         for identifiable in objects_to_be_written:
             for semantic_id in traversal.walk_semantic_ids_recursive(identifiable):
+                if isinstance(semantic_id, model.ExternalReference):
+                    continue
                 if not isinstance(semantic_id, model.ModelReference) \
                         or semantic_id.type is not model.ConceptDescription:
-                    logger.info("semanticId %s does not reference a ConceptDescription.", str(semantic_id))
                     continue
                 try:
                     cd = semantic_id.resolve(object_store)
                 except KeyError:
-                    logger.info("ConceptDescription for semanticId %s not found in object store.", str(semantic_id))
+                    logger.warning("ConceptDescription for semanticId %s not found in object store. Skipping it.",
+                                   str(semantic_id))
                     continue
                 except model.UnexpectedTypeError as e:
-                    logger.error("semanticId %s resolves to %s, which is not a ConceptDescription",
+                    logger.error("semanticId %s resolves to %s, which is not a ConceptDescription. Skipping it.",
                                  str(semantic_id), e.value)
                     continue
                 concept_descriptions.append(cd)
